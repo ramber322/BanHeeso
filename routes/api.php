@@ -13,6 +13,8 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 Route::get('/fetchEvents', [AuthController::class, 'fetchEvents']);
 Route::post('/registerEvent', [AuthController::class, 'registerEvent']);
 
+Route::middleware('auth:sanctum')->get('/getUpcomingEvents', [AuthController::class, 'getUpcomingEvents']);
+
 Route::middleware('auth:sanctum')->get('/getRegisteredEvents', [AuthController::class, 'getRegisteredEvents']);
 
 Route::middleware('auth:sanctum')->post('/registerEvent', [AuthController::class, 'registerEvent']);

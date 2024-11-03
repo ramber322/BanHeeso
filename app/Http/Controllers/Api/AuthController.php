@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Event; // Ensure you import the Event model
 use Illuminate\Support\Facades\Auth;
-
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
@@ -93,7 +93,31 @@ class AuthController extends Controller
         ], 201);
     }
     
+    public function getUpcomingEvents(Request $request)
+    {
+        // Get the current date and add 30 days
+        $now = Carbon::now();
+        $endDate = $now->copy()->addDays(30);
 
+        // Fetch events that are between now and the next 30 days
+        $events = Event::where('event_date', '>=', $now)
+            ->where('event_date', '<=', $endDate)
+            ->orderBy('event_date')
+            ->get();
+
+        // Check if events are found
+        if ($events->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'events' => [],
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'events' => $events,
+        ]);
+    }
     public function fetchEvents(Request $request)
     {
         // Optionally, you can filter events by a specific date
@@ -121,23 +145,29 @@ class AuthController extends Controller
 
 
     public function registerEvent(Request $request)
-{
-    // Validate the request data
-    $request->validate([
-        'event_id' => 'required|exists:events,id',
-    ]);
-
-    // Check if user is authenticated
-    $user = Auth::user();
-    if (!$user) {
-        return response()->json(['success' => false, 'message' => 'User not authenticated.'], 401);
+    {
+        // Validate the request data
+        $request->validate([
+            'event_id' => 'required|exists:events,id',
+        ]);
+    
+        // Check if user is authenticated
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not authenticated.'], 401);
+        }
+    
+        // Check if the user is already registered for the event
+        if ($user->events()->where('event_id', $request->event_id)->exists()) {
+            return response()->json(['success' => false, 'message' => 'You are already registered for this event.']);
+        }
+    
+        // Register the user for the event
+        $user->events()->attach($request->event_id);
+    
+        return response()->json(['success' => true, 'message' => 'Registered for event successfully.']);
     }
-
-    // Register the user for the event
-    $user->events()->attach($request->event_id);
-
-    return response()->json(['success' => true, 'message' => 'Registered for event successfully.']);
-}
+    
 
 
 
