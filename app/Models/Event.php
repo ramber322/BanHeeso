@@ -16,4 +16,9 @@ class Event extends Model
     {
         return $this->belongsToMany(User::class, 'registration_event_users');
     }
+
+    public function feedback() {
+        return $this->hasMany(Feedback::class);
+    }
+    
 }

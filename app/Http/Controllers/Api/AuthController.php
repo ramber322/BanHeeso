@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use App\Models\Event; // Ensure you import the Event model
+use App\Models\Event; 
+use App\Models\Feedback;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -25,7 +26,7 @@ class AuthController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password), // Hash the password
+            'password' => Hash::make($request->password), // Hash  password
         ]);
     
         // Return a response with the created user data
@@ -65,6 +66,12 @@ class AuthController extends Controller
         $request->user()->tokens()->delete();
         return response()->json(['message' => 'Logged out successfully.']);
     }
+    public function index()
+{
+    // Fetch all events
+    $events = Event::all();
+    return response()->json(['events' => $events]);
+}
 
     public function storeEvent(Request $request)
     {
@@ -185,6 +192,86 @@ public function getRegisteredEvents(Request $request) {
 
     return response()->json(['success' => true, 'events' => $registeredEvents]);
 }
+
+
+public function submitFeedback(Request $request, Event $event)
+{
+    if (!auth()->check()) {
+        return response()->json(['message' => 'User not authenticated'], 401);
+    }
+
+    
+
+    // Proceed with validation and feedback submission
+    $validated = $request->validate([
+        'rating' => 'required|integer|min:1|max:5',
+        'comment' => 'nullable|string|max:255',
+    ]);
+
+    $feedback = new Feedback([
+        'user_id' => auth()->user()->id,
+        'event_id' => $event->id,
+        'rating' => $validated['rating'],
+        'comment' => $validated['comment'] ?? null,
+    ]);
+
+    $feedback->save();
+
+    return response()->json(['success' => true, 'message' => 'Feedback submitted successfully.']);
+}
+public function getFeedback(Request $request, Event $event)
+{
+    // NOT BEING USED !!!!! YOU CAN DELETE
+    // Fetch feedback along with associated user data
+    $feedback = Feedback::where('event_id', $event->id)
+                        ->with('user') // Ensure the user relationship is loaded
+                        ->get();
+
+    // Check if feedback is not empty
+    if ($feedback->isEmpty()) {
+        return response()->json(['message' => 'No feedback found for this event.'], 404);
+    }
+
+    // Map the feedback data to include student name
+    $feedbackWithStudentName = $feedback->map(function ($item) {
+        $item->student_name = $item->user->name; // Assuming 'name' field in User model
+        return $item;
+    });
+
+    return response()->json(['feedback' => $feedbackWithStudentName], 200);
+}
+
+
+
+
+public function getEventFeedback($eventId)
+{
+    // Check if the user is authenticated
+    if (!Auth::check()) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
+    // Find the event by ID
+    $event = Event::find($eventId);
+
+    // If the event is not found, return a 404 error
+    if (!$event) {
+        return response()->json(['error' => 'Event not found'], 404);
+    }
+
+    // Fetch feedback along with the associated User (student) data
+    $feedback = $event->feedback()->with('user')->get(); // Assuming 'feedback' is a relationship on Event model
+
+    // Map the feedback data to include the student_name
+    $feedbackWithStudentName = $feedback->map(function ($item) {
+        $item->student_name = $item->user->name; // Assuming 'name' is the field that stores the student's name
+        return $item;
+    });
+
+    // Return the feedback data with student names
+    return response()->json(['feedback' => $feedbackWithStudentName]);
+}
+
 
 }
 

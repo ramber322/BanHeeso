@@ -19,6 +19,13 @@ Route::middleware('auth:sanctum')->get('/getRegisteredEvents', [AuthController::
 
 Route::middleware('auth:sanctum')->post('/registerEvent', [AuthController::class, 'registerEvent']);
 
+Route::middleware('auth:sanctum')->post('events/{event}/feedback', [AuthController::class, 'submitFeedback']);
+Route::get('events/{event}/feedback', [AuthController::class, 'getFeedback']);
+
+
+Route::get('events', [AuthController::class, 'index']);
+Route::middleware('auth:sanctum')->get('events/{event}/feedback', [AuthController::class, 'getEventFeedback']);
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
