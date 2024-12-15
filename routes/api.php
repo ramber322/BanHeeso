@@ -1,31 +1,36 @@
 <?php
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\AuthController;
 
-Route::post('/storeEvent', [AuthController::class, 'storeEvent']);
+// Authentication routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
-
-Route::get('/fetchEvents', [AuthController::class, 'fetchEvents']);
-Route::post('/registerEvent', [AuthController::class, 'registerEvent']);
-
-Route::middleware('auth:sanctum')->get('/getUpcomingEvents', [AuthController::class, 'getUpcomingEvents']);
-
-Route::middleware('auth:sanctum')->get('/getRegisteredEvents', [AuthController::class, 'getRegisteredEvents']);
-
-Route::middleware('auth:sanctum')->post('/registerEvent', [AuthController::class, 'registerEvent']);
-
-Route::middleware('auth:sanctum')->post('events/{event}/feedback', [AuthController::class, 'submitFeedback']);
-Route::get('events/{event}/feedback', [AuthController::class, 'getFeedback']);
-
-
-Route::get('events', [AuthController::class, 'index']);
-Route::middleware('auth:sanctum')->get('events/{event}/feedback', [AuthController::class, 'getEventFeedback']);
-
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+
+// Event-related routes
+Route::middleware('auth:sanctum')->prefix('events')->group(function () {
+    Route::get('upcomingEvents', [EventController::class, 'getUpcomingEvents']);
+    Route::get('registeredEvents', [EventController::class, 'getRegisteredEvents']);
+    Route::get('fetchEvents', [EventController::class, 'getEventsthroughCalendar']);
+
+    Route::post('{event}/feedback', [EventController::class, 'submitFeedback']);
+    Route::post('{event}/register', [EventController::class, 'registerEvent']);
+    Route::get('{event}/feedback', [EventController::class, 'getFeedback']);
+});
+
+
+
+// CRUD ROUTES, current store,index
+Route::middleware('auth:sanctum')->resource('events', EventController::class)->except([
+    'create', 'edit'
+]);
+
+
+
+
