@@ -74,5 +74,50 @@ class AuthController extends Controller
     }
 
 
+    public function showUserInfo(Request $request)
+    {
+        // Get the authenticated user
+        $user = Auth::user();
+
+        // Check if user is authenticated
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        // Return user information
+        return response()->json([
+            'success' => true,
+            'user' => $user,
+        ]);
+    }
+
+
+    public function updateUser(Request $request)
+    {
+        // Validate incoming request data
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . Auth::id(),
+            'role' => 'nullable|string|max:255',
+            // Add other fields as necessary
+        ]);
+
+        // Get the authenticated user
+        $user = Auth::user();
+
+        // Update user data
+        $user->name = $request->input('name');
+        $user->email = $request->input('email');
+
+      
+
+        $user->save();
+
+        return response()->json(['success' => true, 'user' => $user]);
+    }
+
 }
 
