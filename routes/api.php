@@ -21,7 +21,7 @@ Route::middleware('auth:sanctum')->put('/user', [AuthController::class, 'updateU
 Route::middleware('auth:sanctum')->prefix('events')->group(function () {
     Route::get('upcomingEvents', [EventController::class, 'getUpcomingEvents']);
     Route::get('registeredEvents', [EventController::class, 'getRegisteredEvents']);
-    Route::get('fetchEvents', [EventController::class, 'getEventsthroughCalendar']);
+    Route::get('calendarEvents', [EventController::class, 'getEventsthroughCalendar']);
 
     Route::post('{event}/feedback', [EventController::class, 'submitFeedback']);
     Route::post('{event}/register', [EventController::class, 'registerEvent']);
